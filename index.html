@@ -3,63 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastAPI Note Project</title>
+    <title>Secure Notes | FastAPI</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-zinc-300">
-    <div class="max-w-2xl mx-auto mt-8">
-        <h1 class="text-3xl font-bold mb-4">My Notes</h1>
+<body class="min-h-screen bg-zinc-600 text-zinc-900">
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="w-full max-w-4xl rounded-2xl bg-zinc-800 text-zinc-50 shadow-2xl shadow-zinc-500/40">
+            <header class="border-b border-zinc-700 px-6 py-4 flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight text-zinc-50">Secure Notes</h1>
+                    <p class="text-sm text-zinc-300 mt-0.5">FastAPI-powered, token-secured personal notes</p>
+                </div>
+            </header>
 
-        <form id="note-form" class="mb-6 space-y-3">
-            <div>
-                <label class="block text-sm font-medium mb-1">Title</label>
-                <input 
-                id="title"
-                type="text"
-                class="w-full border rounded px-3 py-2"
-                required
+            <main class="flex-1 flex items-center px-6 py-6">
+            <div class="grid gap-6 w-full lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
+
+        <!-- Auth section -->
+        <section class="space-y-4" id="auth-section">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Account</h2>
+                <span class="text-xs text-zinc-400">JWT-based authentication</span>
+            </div>
+
+            <div class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-4 shadow-sm space-y-3">
+            <div id="auth-message" class="text-xs text-rose-400 min-h-4"></div>
+            <div class="flex flex-col gap-2" id="auth-fields">
+                <input
+                    id="auth-username"
+                    type="text"
+                    placeholder="Username (3-20 letters, numbers, _ )"
+                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    minlength="3"
+                    maxlength="20"
+                    pattern="[A-Za-z0-9_]+"
+                />
+                <input
+                    id="auth-password"
+                    type="password"
+                    placeholder="Password (8-72 characters)"
+                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    minlength="8"
+                    maxlength="72"
                 />
             </div>
+            <div class="flex items-center justify-between mt-3 gap-3">
+                <div class="space-x-2" id="auth-buttons">
+                    <button
+                        id="btn-register"
+                        class="inline-flex items-center justify-center rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-100 shadow-sm transition hover:border-zinc-500 hover:bg-zinc-700 cursor-pointer"
+                        type="button"
+                    >
+                        Register
+                    </button>
+                    <button
+                        id="btn-login"
+                        class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer"
+                        type="button"
+                    >
+                        Login
+                    </button>
+                </div>
+                <div id="auth-status" class="flex-1 text-right text-xs text-zinc-400"></div>
+                <button
+                    id="btn-logout"
+                    class="hidden text-xs font-medium text-rose-400 hover:text-rose-300 cursor-pointer"
+                    type="button"
+                >
+                    Logout
+                </button>
+            </div>
+        </div>
+        </section>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Content</label>
-                <textarea
-                id="content"
-                class="w-full border rounded px-3 py-2"
-                rows="3"
-                required
-                ></textarea>
+        <!-- Notes app section (hidden until logged in) -->
+        <section id="app-section" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Notes</h2>
+                <span class="text-xs text-zinc-400">Private to your account</span>
             </div>
 
-            <button
-            type="submit"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer"
-            >
-            Add Note
-        </button>
+        <form id="note-form" class="space-y-4 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-4 shadow-sm">
+            <div class="grid gap-3 md:grid-cols-[minmax(0,0.45fr)_minmax(0,1.55fr)]">
+                <div>
+                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Title</label>
+                    <input 
+                    id="title"
+                    type="text"
+                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    required
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Content</label>
+                    <textarea
+                    id="content"
+                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    rows="3"
+                    required
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div class="flex items-center gap-2 text-xs text-zinc-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
+                    Changes are persisted to your account
+                </div>
+                <button
+                type="submit"
+                class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer"
+                >
+                Add Note
+            </button>
+            </div>
         </form>
 
         <!-- search  -->
-         <div class="mb-4">
-            <input
-            id="search"
-            type="text"
-            placeholder="Search notes..."
-            class="w-full border rounded px-3 py-2"
-            />
+         <div class="flex items-center justify-between gap-3">
+            <div class="flex-1">
+                <input
+                id="search"
+                type="text"
+                placeholder="Search notes by title or content..."
+                class="w-full rounded-lg border border-zinc-400 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                />
+            </div>
+            <span class="hidden text-xs text-zinc-400 md:inline">Real-time filtering</span>
         </div>
+        <ul id="notes-list" class="mt-2 space-y-3 max-h-[420px] overflow-y-auto pr-1"></ul>
+        </section>
 
-        <ul id="notes-list" class="space-y-3"></ul>
+            </div>
+            </main>
+
+            <footer class="border-t border-zinc-700 px-6 py-3 flex items-center justify-between text-[11px] text-zinc-400">
+                <span>FastAPI · SQLModel · JWT Auth</span>
+                <span>Client-only UI · No external JS frameworks</span>
+            </footer>
+        </div>
     </div>
 
     <script>
+        let accessToken = null;
+        let currentUsername = null;
+
+        function clearAuthInputs() {
+            const userInput = document.getElementById("auth-username");
+            const passInput = document.getElementById("auth-password");
+            if (userInput) userInput.value = "";
+            if (passInput) passInput.value = "";
+        }
+
+        function getAuthHeaders(extraHeaders = {}) {
+            const headers = { ...extraHeaders };
+            if (accessToken) {
+                headers["Authorization"] = `Bearer ${accessToken}`;
+            }
+            return headers;
+        }
+
+        function setAuthState(token, username) {
+            accessToken = token;
+            currentUsername = username;
+
+            if (token && username) {
+                localStorage.setItem("access_token", token);
+                localStorage.setItem("username", username);
+            } else {
+                localStorage.removeItem("access_token");
+                localStorage.removeItem("username");
+            }
+
+            updateUIForAuth();
+        }
+
+        function updateUIForAuth() {
+            const appSection = document.getElementById("app-section");
+            const authStatus = document.getElementById("auth-status");
+            const logoutBtn = document.getElementById("btn-logout");
+            const authMessage = document.getElementById("auth-message");
+            const authFields = document.getElementById("auth-fields");
+            const authButtons = document.getElementById("auth-buttons");
+
+            if (accessToken && currentUsername) {
+                appSection.classList.remove("hidden");
+                authStatus.textContent = `Logged in as ${currentUsername}`;
+                logoutBtn.classList.remove("hidden");
+                authMessage.textContent = "";
+                if (authFields) authFields.classList.add("hidden");
+                if (authButtons) authButtons.classList.add("hidden");
+            } else {
+                appSection.classList.add("hidden");
+                authStatus.textContent = "Not logged in";
+                logoutBtn.classList.add("hidden");
+                if (authFields) authFields.classList.remove("hidden");
+                if (authButtons) authButtons.classList.remove("hidden");
+            }
+        }
+
+        function handleAuthError(response) {
+            if (response.status === 401 || response.status === 403) {
+                setAuthState(null, null);
+                const authMessage = document.getElementById("auth-message");
+                authMessage.textContent = "Session expired or unauthorized. Please log in again.";
+                return true;
+            }
+            return false;
+        }
+
         async function loadNotes(search = ''){
             let url = "http://127.0.0.1:8000/notes";
             if(search && search.trim()!== ''){
                 const params = new URLSearchParams({search});
                 url+=`?${params.toString()}`;
             }
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                headers: getAuthHeaders(),
+            });
+
+            if (!response.ok) {
+                if (handleAuthError(response)) return;
+                alert("Failed to load notes");
+                return;
+            }
             const notes = await response.json();
 
             const list = document.getElementById("notes-list");
@@ -67,22 +235,22 @@
 
             notes.forEach((note) => {
                 const li = document.createElement("li");
-                li.className  = "bg-white p-4 rounded shadow cursor-pointer hover:bg-gray-100";
+                li.className  = "group rounded-xl border border-zinc-700 bg-zinc-900/70 p-4 shadow-sm transition hover:border-indigo-500/60 hover:bg-zinc-900 cursor-pointer";
                 li.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h2 class="text-xl font-semibold mb-2">${note.title}</h2>
-                        <p>${note.content}</p>
+                <div class="flex justify-between items-start gap-4">
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-semibold mb-1 text-zinc-50 truncate">${note.title}</h2>
+                        <p class="text-sm text-zinc-200 whitespace-pre-line">${note.content}</p>
                         </div>
-                        <div class="space-x-2">
+                        <div class="space-x-2 shrink-0">
                             <button
-                            class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+                            class="text-xs font-medium text-indigo-400 hover:text-indigo-300 cursor-pointer"
                             data-edit-id="${note.id}"
                             >
                             Edit
                             </button>
                             <button
-                            class="text-sm text-red-600 hover:text-red-800 cursor-pointer"
+                            class="text-xs font-medium text-rose-400 hover:text-rose-300 cursor-pointer"
                             data-id="${note.id}"
                             >
                             Delete
@@ -96,9 +264,15 @@
             document.querySelectorAll('button[data-id]').forEach((button) => {
                 button.addEventListener('click', async () => {
                     const id = button.getAttribute('data-id');
-                    await fetch(`http://127.0.0.1:8000/notes/${id}`, {
+                    const response = await fetch(`http://127.0.0.1:8000/notes/${id}`, {
                         method: 'DELETE',
+                        headers: getAuthHeaders(),
                     });
+                    if (!response.ok) {
+                        if (handleAuthError(response)) return;
+                        alert("Failed to delete note");
+                        return;
+                    }
                     loadNotes();
                 });
             });
@@ -123,11 +297,17 @@
                         return; // nothing to update
                         }
 
-                        await fetch(`http://127.0.0.1:8000/notes/${id}`, {
+                        const response = await fetch(`http://127.0.0.1:8000/notes/${id}`, {
                             method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                             body: JSON.stringify(body),
                         });
+
+                        if (!response.ok) {
+                            if (handleAuthError(response)) return;
+                            alert("Failed to update note");
+                            return;
+                        }
 
                         loadNotes();
                     });
@@ -140,11 +320,17 @@
             const title = document.getElementById("title").value;
             const content = document.getElementById("content").value;
 
-            await fetch("http://127.0.0.1:8000/notes", {
+            const response = await fetch("http://127.0.0.1:8000/notes", {
                 method: "POST",
-                headers: { "Content-Type" : "application/json" },
+                headers: getAuthHeaders({ "Content-Type" : "application/json" }),
                 body: JSON.stringify({title, content}),
             });
+
+            if (!response.ok) {
+                if (handleAuthError(response)) return;
+                alert("Failed to create note");
+                return;
+            }
 
             document.getElementById("title").value = "";
             document.getElementById("content").value = "";
@@ -161,7 +347,98 @@
             });
         }
 
-        loadNotes();
+        async function loginWithCredentials(username, password, source = "login") {
+            const authMessage = document.getElementById("auth-message");
+            authMessage.textContent = "";
+
+            if (!username || !password) {
+                authMessage.textContent = "Username and password are required.";
+                return false;
+            }
+
+            const body = new URLSearchParams();
+            body.append("username", username);
+            body.append("password", password);
+
+            const response = await fetch("http://127.0.0.1:8000/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body,
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                authMessage.textContent = data.detail || (source === "register" ? "Auto-login after registration failed" : "Login failed");
+                return false;
+            }
+
+            const data = await response.json();
+            if (data && data.access_token) {
+                setAuthState(data.access_token, username);
+                clearAuthInputs();
+                authMessage.textContent = source === "register" ? "Registered and logged in successfully." : "Logged in successfully.";
+                loadNotes();
+                return true;
+            } else {
+                authMessage.textContent = "Invalid token response from server.";
+                return false;
+            }
+        }
+
+        // Auth handlers
+        document.getElementById("btn-register").addEventListener("click", async () => {
+            const username = document.getElementById("auth-username").value.trim();
+            const password = document.getElementById("auth-password").value.trim();
+            const authMessage = document.getElementById("auth-message");
+            authMessage.textContent = "";
+
+            if (!username || !password) {
+                authMessage.textContent = "Username and password are required.";
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:8000/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                authMessage.textContent = data.detail || "Registration failed";
+                return;
+            }
+
+            // After successful registration, automatically log in and hide inputs
+            await loginWithCredentials(username, password, "register");
+        });
+
+        document.getElementById("btn-login").addEventListener("click", async () => {
+            const username = document.getElementById("auth-username").value.trim();
+            const password = document.getElementById("auth-password").value.trim();
+            await loginWithCredentials(username, password, "login");
+        });
+
+        document.getElementById("btn-logout").addEventListener("click", () => {
+            setAuthState(null, null);
+            clearAuthInputs();
+            const list = document.getElementById("notes-list");
+            if (list) list.innerHTML = "";
+        });
+
+        // Restore auth state from localStorage on load
+        (function initAuth() {
+            const storedToken = localStorage.getItem("access_token");
+            const storedUser = localStorage.getItem("username");
+            if (storedToken && storedUser) {
+                accessToken = storedToken;
+                currentUsername = storedUser;
+            }
+            updateUIForAuth();
+            if (accessToken) {
+                loadNotes();
+            }
+        })();
     </script>
 </body>
 </html>

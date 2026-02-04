@@ -62,10 +62,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 
+"""Auth and notes models and routes."""
+
 # auth added ----- >
 
 class UserBase(SQLModel):
-    username: str
+    username: str = Field(
+        min_length=3,
+        max_length=20,
+        regex=r"^[a-zA-Z0-9_]+$",
+    )
 
 
 class User(UserBase, table=True):
@@ -74,7 +80,8 @@ class User(UserBase, table=True):
 
 
 class UserCreate(UserBase):
-    password: str
+    # bcrypt safely supports up to 72 bytes; enforce this at API level
+    password: str = Field(min_length=8, max_length=72)
 
 
 class UserRead(UserBase):
@@ -135,7 +142,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """Hash password with bcrypt, enforcing its 72-byte limit.
+
+    bcrypt works on bytes and rejects inputs >72 bytes. We therefore
+    encode to UTF-8 and truncate by bytes before hashing.
+    """
+    password_bytes = password.encode("utf-8")[:72]
+    return pwd_context.hash(password_bytes)
 
 
 def get_user_by_username(session: Session, username: str) -> Optional[User]:
