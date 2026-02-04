@@ -1,0 +1,21 @@
+# Virtual environments
+fastapi_venv/
+venv/
+.env/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local environment/config
+.env
+*.sqlite3
+notes.db
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
