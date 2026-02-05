@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,28 +8,68 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         /* Small UI polish beyond Tailwind defaults */
-        :root { color-scheme: dark; }
-        html, body { height: 100%; }
-        ::selection { background: rgba(99, 102, 241, 0.35); }
+        :root {
+            color-scheme: dark;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        ::selection {
+            background: rgba(99, 102, 241, 0.35);
+        }
 
         /* Scrollbars (Chromium / Edge) */
-        *::-webkit-scrollbar { width: 10px; height: 10px; }
-        *::-webkit-scrollbar-track { background: rgba(24, 24, 27, 0.4); border-radius: 999px; }
-        *::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: 999px; border: 2px solid rgba(24, 24, 27, 0.55); }
-        *::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+        *::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
 
-        @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .card-in { animation: cardIn 240ms ease-out both; }
+        *::-webkit-scrollbar-track {
+            background: rgba(24, 24, 27, 0.4);
+            border-radius: 999px;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.35);
+            border-radius: 999px;
+            border: 2px solid rgba(24, 24, 27, 0.55);
+        }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-in {
+            animation: cardIn 240ms ease-out both;
+        }
     </style>
 </head>
+
 <body class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 text-zinc-50">
     <div class="min-h-screen flex items-center justify-center px-4 py-10">
-        <div class="card-in w-full max-w-5xl rounded-3xl border border-zinc-800/70 bg-zinc-900/55 text-zinc-50 shadow-2xl shadow-black/40 backdrop-blur">
+        <div
+            class="card-in w-full max-w-5xl rounded-3xl border border-zinc-800/70 bg-zinc-900/55 text-zinc-50 shadow-2xl shadow-black/40 backdrop-blur">
             <header class="border-b border-zinc-800/70 px-6 py-5 flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 class="text-2xl font-semibold tracking-tight text-zinc-50">Secure Notes</h1>
-                        <span class="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-200">
+                        <span
+                            class="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-200">
                             <span class="h-1.5 w-1.5 rounded-full bg-indigo-300"></span>
                             JWT secured
                         </span>
@@ -37,137 +78,165 @@
                 </div>
                 <div class="flex items-center gap-2 text-[11px] text-zinc-400">
                     <span class="hidden sm:inline">Tip:</span>
-                    <span class="rounded-full border border-zinc-800/80 bg-zinc-950/40 px-2.5 py-1">Use search to filter instantly</span>
+                    <span class="rounded-full border border-zinc-800/80 bg-zinc-950/40 px-2.5 py-1">Use search to filter
+                        instantly</span>
                 </div>
             </header>
 
             <main class="flex-1 px-6 py-6">
-            <div class="grid gap-6 w-full lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.95fr)]">
+                <div class="grid gap-6 w-full lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.95fr)]">
 
-        <!-- Auth section -->
-        <section class="space-y-4" id="auth-section">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Account</h2>
-                <span class="text-xs text-zinc-400">JWT-based authentication</span>
-            </div>
+                    <!-- Auth section -->
+                    <section class="space-y-4" id="auth-section">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Account</h2>
+                            <span class="text-xs text-zinc-400">JWT-based authentication</span>
+                        </div>
 
-            <div class="rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm space-y-3">
-            <div id="auth-message" class="min-h-4 text-xs text-zinc-300"></div>
-            <div class="flex flex-col gap-2" id="auth-fields">
-                <input
-                    id="auth-username"
-                    type="text"
-                    placeholder="Username (3-20 letters, numbers, _ )"
-                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                    minlength="3"
-                    maxlength="20"
-                    pattern="[A-Za-z0-9_]+"
-                />
-                <input
-                    id="auth-password"
-                    type="password"
-                    placeholder="Password (8-72 characters)"
-                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                    minlength="8"
-                    maxlength="72"
-                />
-            </div>
-            <div class="flex items-center justify-between mt-3 gap-3">
-                <div class="space-x-2" id="auth-buttons">
-                    <button
-                        id="btn-register"
-                        class="inline-flex items-center justify-center rounded-lg border border-zinc-700/80 bg-zinc-950/30 px-4 py-2 text-xs font-medium text-zinc-100 shadow-sm transition hover:border-zinc-600 hover:bg-zinc-900/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                        type="button"
-                    >
-                        Register
-                    </button>
-                    <button
-                        id="btn-login"
-                        class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                        type="button"
-                    >
-                        Login
-                    </button>
+                        <div class="rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm space-y-3">
+                            <div id="auth-message" class="min-h-4 text-xs text-zinc-300"></div>
+                            <div class="flex flex-col gap-2" id="auth-fields">
+                                <input id="auth-username" type="text" placeholder="Username (3-20 letters, numbers, _ )"
+                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                    minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" />
+                                <input id="auth-password" type="password" placeholder="Password (8-72 characters)"
+                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                    minlength="8" maxlength="72" />
+                            </div>
+                            <div class="flex items-center justify-between mt-3 gap-3">
+                                <div class="space-x-2" id="auth-buttons">
+                                    <button id="btn-register"
+                                        class="inline-flex items-center justify-center rounded-lg border border-zinc-700/80 bg-zinc-950/30 px-4 py-2 text-xs font-medium text-zinc-100 shadow-sm transition hover:border-zinc-600 hover:bg-zinc-900/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        type="button">
+                                        Register
+                                    </button>
+                                    <button id="btn-login"
+                                        class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        type="button">
+                                        Login
+                                    </button>
+                                </div>
+                                <div id="auth-status" class="flex-1 text-right text-xs text-zinc-400"></div>
+                                <button id="btn-logout"
+                                    class="hidden text-xs font-medium text-rose-300 hover:text-rose-200 cursor-pointer"
+                                    type="button">
+                                    Logout
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Notes app section (hidden until logged in) -->
+                    <section id="app-section" class="hidden space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Notes</h2>
+                            <span class="text-xs text-zinc-400">Private to your account</span>
+                        </div>
+
+                        <form id="note-form"
+                            class="space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm">
+                            <div class="grid gap-3 md:grid-cols-[minmax(0,0.45fr)_minmax(0,1.55fr)]">
+                                <div>
+                                    <label
+                                        class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Title</label>
+                                    <input id="title" type="text"
+                                        class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        required />
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Content</label>
+                                    <textarea id="content"
+                                        class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        rows="3" required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                <div class="flex items-center gap-2 text-xs text-zinc-400">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
+                                    Changes are persisted to your account
+                                </div>
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40">
+                                    Add Note
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- search  -->
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex-1">
+                                <input id="search" type="text" placeholder="Search notes by title or content..."
+                                    class="w-full rounded-lg border border-zinc-700/70 bg-zinc-950/30 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                            </div>
+                            <span class="hidden text-xs text-zinc-400 md:inline">Real-time filtering</span>
+                        </div>
+                        <div id="notes-empty"
+                            class="hidden rounded-2xl border border-dashed border-zinc-800/80 bg-zinc-950/30 p-6 text-center text-sm text-zinc-400">
+                            <div class="text-zinc-200 font-medium">No notes yet</div>
+                            <div class="mt-1 text-xs text-zinc-400">Add your first note above, or clear the search
+                                filter.</div>
+                        </div>
+                        <ul id="notes-list" class="mt-2 space-y-3 max-h-[420px] overflow-y-auto pr-1"></ul>
+
+                        <!-- delete button -->
+                        <button id="delete-account"
+                            class="mt-6 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 cursor-pointer text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-500/40">
+                            Delete Account
+                        </button>
+
+                        <!-- change password button -->
+
+                        <button id="change-password-toggle"
+                            class="mt-2 ml-2 bg-amber-500 text-white px-4 py-2 hover:bg-amber-600 rounded cursor-pointer text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+                            Change Password
+                        </button>
+
+                        <div id="change-password-form" class="mt-4 hidden">
+                            <div class="space-y-3 rounded-2xl border border-zinc-800/80 bg-zinc-950/40 p-4 shadow-sm">
+                                <div>
+                                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">
+                                        Current Password
+                                    </label>
+                                    <input id="current-password" type="password"
+                                        class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">
+                                        New Password
+                                    </label>
+                                    <input id="new-password" type="password"
+                                        class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">
+                                        Retype New Password
+                                    </label>
+                                    <input id="confirm-new-password" type="password"
+                                        class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                </div>
+                                <div class="flex justify-end space-x-2">
+                                    <button id="cancel-change-password"
+                                        class="px-3 py-2 rounded-lg border border-zinc-700/80 bg-zinc-950/30 text-xs text-zinc-200 hover:border-zinc-600 hover:bg-zinc-900/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+                                        Cancel
+                                    </button>
+                                    <button id="submit-change-password"
+                                        class="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer">
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </section>
+
                 </div>
-                <div id="auth-status" class="flex-1 text-right text-xs text-zinc-400"></div>
-                <button
-                    id="btn-logout"
-                    class="hidden text-xs font-medium text-rose-300 hover:text-rose-200 cursor-pointer"
-                    type="button"
-                >
-                    Logout
-                </button>
-            </div>
-        </div>
-        </section>
-
-        <!-- Notes app section (hidden until logged in) -->
-        <section id="app-section" class="hidden space-y-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-medium uppercase tracking-[0.16em] text-zinc-300">Notes</h2>
-                <span class="text-xs text-zinc-400">Private to your account</span>
-            </div>
-
-        <form id="note-form" class="space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm">
-            <div class="grid gap-3 md:grid-cols-[minmax(0,0.45fr)_minmax(0,1.55fr)]">
-                <div>
-                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Title</label>
-                    <input 
-                    id="title"
-                    type="text"
-                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                    required
-                    />
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Content</label>
-                    <textarea
-                    id="content"
-                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                    rows="3"
-                    required
-                    ></textarea>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-                <div class="flex items-center gap-2 text-xs text-zinc-400">
-                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
-                    Changes are persisted to your account
-                </div>
-                <button
-                type="submit"
-                class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                >
-                Add Note
-            </button>
-            </div>
-        </form>
-
-        <!-- search  -->
-         <div class="flex items-center justify-between gap-3">
-            <div class="flex-1">
-                <input
-                id="search"
-                type="text"
-                placeholder="Search notes by title or content..."
-                class="w-full rounded-lg border border-zinc-700/70 bg-zinc-950/30 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                />
-            </div>
-            <span class="hidden text-xs text-zinc-400 md:inline">Real-time filtering</span>
-        </div>
-        <div id="notes-empty" class="hidden rounded-2xl border border-dashed border-zinc-800/80 bg-zinc-950/30 p-6 text-center text-sm text-zinc-400">
-            <div class="text-zinc-200 font-medium">No notes yet</div>
-            <div class="mt-1 text-xs text-zinc-400">Add your first note above, or clear the search filter.</div>
-        </div>
-        <ul id="notes-list" class="mt-2 space-y-3 max-h-[420px] overflow-y-auto pr-1"></ul>
-        </section>
-
-            </div>
             </main>
 
-            <footer class="border-t border-zinc-800/70 px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+            <footer
+                class="border-t border-zinc-800/70 px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
                 <span>FastAPI · SQLModel · JWT Auth</span>
                 <span>Client-only UI · No external JS frameworks</span>
             </footer>
@@ -262,11 +331,13 @@
             return false;
         }
 
-        async function loadNotes(search = ''){
+
+
+        async function loadNotes(search = '') {
             let url = "http://127.0.0.1:8000/notes";
-            if(search && search.trim()!== ''){
-                const params = new URLSearchParams({search});
-                url+=`?${params.toString()}`;
+            if (search && search.trim() !== '') {
+                const params = new URLSearchParams({ search });
+                url += `?${params.toString()}`;
             }
             const response = await fetch(url, {
                 headers: getAuthHeaders(),
@@ -292,7 +363,7 @@
 
             notes.forEach((note) => {
                 const li = document.createElement("li");
-                li.className  = "group rounded-2xl border border-zinc-800/80 bg-zinc-950/30 p-4 shadow-sm transition hover:border-indigo-500/50 hover:bg-zinc-950/45 cursor-pointer";
+                li.className = "group rounded-2xl border border-zinc-800/80 bg-zinc-950/30 p-4 shadow-sm transition hover:border-indigo-500/50 hover:bg-zinc-950/45 cursor-pointer";
                 li.innerHTML = `
                 <div class="flex justify-between items-start gap-4">
                     <div class="min-w-0">
@@ -315,7 +386,7 @@
                             </div>
                             </div>
                             `;
-                                list.appendChild(li);
+                list.appendChild(li);
             });
 
             document.querySelectorAll('button[data-id]').forEach((button) => {
@@ -341,7 +412,7 @@
 
                     const currentTitle = prompt('New title (leave blank to keep):');
                     const currentContent = prompt('New content (leave blank to keep):');
-                    
+
                     const body = {};
                     if (currentTitle !== null && currentTitle !== '') {
                         body.title = currentTitle;
@@ -349,26 +420,26 @@
                     if (currentContent !== null && currentContent !== '') {
                         body.content = currentContent;
                     }
-                    
+
                     if (Object.keys(body).length === 0) {
                         return; // nothing to update
-                        }
+                    }
 
-                        const response = await fetch(`http://127.0.0.1:8000/notes/${id}`, {
-                            method: 'PUT',
-                            headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                            body: JSON.stringify(body),
-                        });
-
-                        if (!response.ok) {
-                            if (handleAuthError(response)) return;
-                            alert("Failed to update note");
-                            return;
-                        }
-
-                        loadNotes();
+                    const response = await fetch(`http://127.0.0.1:8000/notes/${id}`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify(body),
                     });
+
+                    if (!response.ok) {
+                        if (handleAuthError(response)) return;
+                        alert("Failed to update note");
+                        return;
+                    }
+
+                    loadNotes();
                 });
+            });
         }
 
         document.getElementById("note-form").addEventListener("submit", async (event) => {
@@ -379,8 +450,8 @@
 
             const response = await fetch("http://127.0.0.1:8000/notes", {
                 method: "POST",
-                headers: getAuthHeaders({ "Content-Type" : "application/json" }),
-                body: JSON.stringify({title, content}),
+                headers: getAuthHeaders({ "Content-Type": "application/json" }),
+                body: JSON.stringify({ title, content }),
             });
 
             if (!response.ok) {
@@ -496,6 +567,113 @@
                 loadNotes();
             }
         })();
+
+        // delete account handler
+        const deleteAccountButton = document.getElementById("delete-account");
+
+        if (deleteAccountButton) {
+            deleteAccountButton.addEventListener("click", async () => {
+                const confirmed = window.confirm(
+                    "Are you sure you want to delete your account? This will delete all your notes."
+                );
+                if (!confirmed) return;
+
+
+                const token = localStorage.getItem("access_token");
+                if (!token) {
+                    alert("You are not logged in (no token found).");
+                    return;
+                }
+
+                const response = await fetch("http://127.0.0.1:8000/users/me", {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    // clear auth and go back to main page
+
+                    localStorage.removeItem("access_token");
+                    window.location.href = "/";  // this hits your root route -> index.html
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    alert("Failed to delete account: " + (data.detail || "Unknown error"));
+                }
+            });
+        }
+
+        // change password handler
+
+        const changePasswordToggle = document.getElementById("change-password-toggle");
+        const changePasswordForm = document.getElementById("change-password-form");
+        const cancelChangePassword = document.getElementById("cancel-change-password");
+        const submitChangePassword = document.getElementById("submit-change-password");
+
+        if (changePasswordToggle && changePasswordForm) {
+            changePasswordToggle.addEventListener("click", () => {
+                changePasswordForm.classList.remove("hidden");
+            });
+        }
+
+        if (cancelChangePassword && changePasswordForm) {
+            cancelChangePassword.addEventListener("click", (e) => {
+                e.preventDefault();
+                changePasswordForm.classList.add("hidden");
+                document.getElementById("current-password").value = "";
+                document.getElementById("new-password").value = "";
+            });
+        }
+
+        if (submitChangePassword) {
+            submitChangePassword.addEventListener("click", async (e) => {
+                e.preventDefault();
+
+                const currentPassword = document.getElementById("current-password").value;
+                const newPassword = document.getElementById("new-password").value;
+                const confirmPassword = document.getElementById("confirm-new-password").value;
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    alert("Please fill all fields.");
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    alert("New password and confirmation do not match.");
+                    return;
+                }
+
+                const token = localStorage.getItem("access_token");
+                if (!token) {
+                    alert("You are not logged in (no token found).");
+                    return;
+                }
+
+                const response = await fetch("http://127.0.0.1:8000/users/me/change-password", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword,
+                    }),
+                });
+
+                if (response.ok) {
+                    alert("Password updated successfully. Please log in again.");
+                    localStorage.removeItem("access_token");
+                    window.location.href = "/";
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    alert("Failed to change password: " + (data.detail || "Unknown error"));
+                }
+            });
+        }
+
     </script>
 </body>
+
 </html>
