@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Depends, status, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlmodel import SQLModel, Field, Session, create_engine, select
@@ -128,7 +128,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # ---------- Models ----------
 
 class UserBase(BaseModel):
-    username: str
+    username: EmailStr
 
 
 class UserInDB(UserBase):
@@ -141,6 +141,40 @@ class UserInDB(UserBase):
 
 class UserCreate(UserBase):
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v, info):
+        username = getattr(info.data, "username", "")  # username from same model
+
+        # length
+        if len(v) < 12:
+            raise ValueError("Password must be at least 12 characters long")
+
+        # character classes
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must include a lowercase letter")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must include an uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must include a number")
+        if not any(c in "!@#$%^&*()-_=+[]{};:,<.>/?\\|`~" for c in v):
+            raise ValueError("Password must include a special character")
+
+        uname = str(username).lower()
+        local_part = uname.split("@")[0] if "@" in uname else uname
+        lower_pw = v.lower()
+
+        if uname and uname in lower_pw:
+            raise ValueError("Password must not contain your email")
+        if local_part and local_part in lower_pw:
+            raise ValueError("Password must not contain your name/username")
+
+        common_words = ["password", "qwerty", "letmein", "123456", "123456789", "admin"]
+        if any(w in lower_pw for w in common_words):
+            raise ValueError("Password is too common")
+
+        return v
 
 
 class UserRead(UserBase):
@@ -574,28 +608,21 @@ async def update_note(
 
 # delete a specific note by id
 
-# @app.delete("/notes/{note_id}")
-# async def delete_note(note_id: int):
-#     for index, note in enumerate(notes):
-#         if note.id == note_id:
-#             notes.pop(index)
-#             return {"detail": "Note deleted"}
-        
-#     raise HTTPException(status_code=404, detail="Note not found")
+@app.delete("/notes/{note_id}")
+async def delete_note(
+    note_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    try:
+        note_doc = await notes_collection.find_one({"_id": ObjectId(note_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Note not found")
 
-# @app.delete("/notes/{note_id}")
-# async def delete_note(
-#     note_id: int,
-#     current_user: User = Depends(get_current_user),
-# ):
-#     with Session(engine) as session:
-#         note = session.get(Note, note_id)
-#         if not note or note.user_id != current_user.id:
-#             raise HTTPException(status_code=404, detail="Note not found")
+    if not note_doc or note_doc["user_id"] != current_user.id:
+        raise HTTPException(status_code=404, detail="Note not found")
 
-#         session.delete(note)
-#         session.commit()
-#         return {"detail": "Note deleted"}
+    await notes_collection.delete_one({"_id": ObjectId(note_id)})
+    return {"detail": "Note deleted"}
 
 
 # faulty user deletion route---->

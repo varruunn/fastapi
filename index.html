@@ -96,12 +96,10 @@
                         <div class="rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm space-y-3">
                             <div id="auth-message" class="min-h-4 text-xs text-zinc-300"></div>
                             <div class="flex flex-col gap-2" id="auth-fields">
-                                <input id="auth-username" type="text" placeholder="Username (3-20 letters, numbers, _ )"
-                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                                    minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" />
-                                <input id="auth-password" type="password" placeholder="Password (8-72 characters)"
-                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-                                    minlength="8" maxlength="72" />
+                                <input id="auth-username" type="email" placeholder="Email Address"
+                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                <input id="auth-password" type="password" placeholder="Password (min 12 characters, mixed case, number & symbol)"
+                                    class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
                             </div>
                             <div class="flex items-center justify-between mt-3 gap-3">
                                 <div class="space-x-2" id="auth-buttons">
@@ -331,6 +329,46 @@
             return false;
         }
 
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function checkPasswordStrength(password, username) {
+            if (password.length < 12) {
+                return "Password must be at least 12 characters long.";
+            }
+            if (!/[a-z]/.test(password)) {
+                return "Password must include a lowercase letter.";
+            }
+            if (!/[A-Z]/.test(password)) {
+                return "Password must include an uppercase letter.";
+            }
+            if (!/[0-9]/.test(password)) {
+                return "Password must include a number.";
+            }
+            if (!/[!@#$%^&*()\-\_=+\[\]{};:,<.>\/?\\|`~]/.test(password)) {
+                return "Password must include a special character.";
+            }
+
+            const uname = (username || "").toLowerCase();
+            const localPart = uname.includes("@") ? uname.split("@")[0] : uname;
+            const lowerPw = password.toLowerCase();
+
+            if (uname && lowerPw.includes(uname)) {
+                return "Password must not contain your email.";
+            }
+            if (localPart && lowerPw.includes(localPart)) {
+                return "Password must not contain your name/username.";
+            }
+
+            const commonWords = ["password", "qwerty", "letmein", "123456", "123456789", "admin"];
+            if (commonWords.some((w) => lowerPw.includes(w))) {
+                return "Password is too common.";
+            }
+
+            return ""; // OK
+        }
+
 
 
         async function loadNotes(search = '') {
@@ -519,7 +557,18 @@
             setAuthMessage("");
 
             if (!username || !password) {
-                setAuthMessage("Username and password are required.", "error");
+                setAuthMessage("Email and password are required.", "error");
+                return;
+            }
+
+            if(!isValidEmail(username)){
+                setAuthMessage("Please enter a valid email address.", "error");
+                return;
+            }
+
+            const pwIssue = checkPasswordStrength(password, username);
+            if (pwIssue) {
+                setAuthMessage(pwIssue, "error");
                 return;
             }
 
