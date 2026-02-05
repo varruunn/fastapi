@@ -5,19 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Notes | FastAPI</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Small UI polish beyond Tailwind defaults */
+        :root { color-scheme: dark; }
+        html, body { height: 100%; }
+        ::selection { background: rgba(99, 102, 241, 0.35); }
+
+        /* Scrollbars (Chromium / Edge) */
+        *::-webkit-scrollbar { width: 10px; height: 10px; }
+        *::-webkit-scrollbar-track { background: rgba(24, 24, 27, 0.4); border-radius: 999px; }
+        *::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: 999px; border: 2px solid rgba(24, 24, 27, 0.55); }
+        *::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+
+        @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .card-in { animation: cardIn 240ms ease-out both; }
+    </style>
 </head>
-<body class="min-h-screen bg-zinc-600 text-zinc-900">
-    <div class="min-h-screen flex items-center justify-center px-4">
-        <div class="w-full max-w-4xl rounded-2xl bg-zinc-800 text-zinc-50 shadow-2xl shadow-zinc-500/40">
-            <header class="border-b border-zinc-700 px-6 py-4 flex items-center justify-between">
+<body class="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-indigo-950 text-zinc-50">
+    <div class="min-h-screen flex items-center justify-center px-4 py-10">
+        <div class="card-in w-full max-w-5xl rounded-3xl border border-zinc-800/70 bg-zinc-900/55 text-zinc-50 shadow-2xl shadow-black/40 backdrop-blur">
+            <header class="border-b border-zinc-800/70 px-6 py-5 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl font-semibold tracking-tight text-zinc-50">Secure Notes</h1>
-                    <p class="text-sm text-zinc-300 mt-0.5">FastAPI-powered, token-secured personal notes</p>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-semibold tracking-tight text-zinc-50">Secure Notes</h1>
+                        <span class="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-medium text-indigo-200">
+                            <span class="h-1.5 w-1.5 rounded-full bg-indigo-300"></span>
+                            JWT secured
+                        </span>
+                    </div>
+                    <p class="text-sm text-zinc-300 mt-1">FastAPI-powered, token-secured personal notes</p>
+                </div>
+                <div class="flex items-center gap-2 text-[11px] text-zinc-400">
+                    <span class="hidden sm:inline">Tip:</span>
+                    <span class="rounded-full border border-zinc-800/80 bg-zinc-950/40 px-2.5 py-1">Use search to filter instantly</span>
                 </div>
             </header>
 
-            <main class="flex-1 flex items-center px-6 py-6">
-            <div class="grid gap-6 w-full lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
+            <main class="flex-1 px-6 py-6">
+            <div class="grid gap-6 w-full lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.95fr)]">
 
         <!-- Auth section -->
         <section class="space-y-4" id="auth-section">
@@ -26,8 +51,8 @@
                 <span class="text-xs text-zinc-400">JWT-based authentication</span>
             </div>
 
-            <div class="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-4 shadow-sm space-y-3">
-            <div id="auth-message" class="text-xs text-rose-400 min-h-4"></div>
+            <div class="rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm space-y-3">
+            <div id="auth-message" class="min-h-4 text-xs text-zinc-300"></div>
             <div class="flex flex-col gap-2" id="auth-fields">
                 <input
                     id="auth-username"
@@ -51,14 +76,14 @@
                 <div class="space-x-2" id="auth-buttons">
                     <button
                         id="btn-register"
-                        class="inline-flex items-center justify-center rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-100 shadow-sm transition hover:border-zinc-500 hover:bg-zinc-700 cursor-pointer"
+                        class="inline-flex items-center justify-center rounded-lg border border-zinc-700/80 bg-zinc-950/30 px-4 py-2 text-xs font-medium text-zinc-100 shadow-sm transition hover:border-zinc-600 hover:bg-zinc-900/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                         type="button"
                     >
                         Register
                     </button>
                     <button
                         id="btn-login"
-                        class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer"
+                        class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                         type="button"
                     >
                         Login
@@ -67,7 +92,7 @@
                 <div id="auth-status" class="flex-1 text-right text-xs text-zinc-400"></div>
                 <button
                     id="btn-logout"
-                    class="hidden text-xs font-medium text-rose-400 hover:text-rose-300 cursor-pointer"
+                    class="hidden text-xs font-medium text-rose-300 hover:text-rose-200 cursor-pointer"
                     type="button"
                 >
                     Logout
@@ -83,7 +108,7 @@
                 <span class="text-xs text-zinc-400">Private to your account</span>
             </div>
 
-        <form id="note-form" class="space-y-4 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-4 shadow-sm">
+        <form id="note-form" class="space-y-4 rounded-2xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-4 shadow-sm">
             <div class="grid gap-3 md:grid-cols-[minmax(0,0.45fr)_minmax(0,1.55fr)]">
                 <div>
                     <label class="block text-xs font-medium tracking-wide text-zinc-300 mb-1">Title</label>
@@ -113,7 +138,7 @@
                 </div>
                 <button
                 type="submit"
-                class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer"
+                class="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                 >
                 Add Note
             </button>
@@ -127,10 +152,14 @@
                 id="search"
                 type="text"
                 placeholder="Search notes by title or content..."
-                class="w-full rounded-lg border border-zinc-400 bg-zinc-900/40 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                class="w-full rounded-lg border border-zinc-700/70 bg-zinc-950/30 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                 />
             </div>
             <span class="hidden text-xs text-zinc-400 md:inline">Real-time filtering</span>
+        </div>
+        <div id="notes-empty" class="hidden rounded-2xl border border-dashed border-zinc-800/80 bg-zinc-950/30 p-6 text-center text-sm text-zinc-400">
+            <div class="text-zinc-200 font-medium">No notes yet</div>
+            <div class="mt-1 text-xs text-zinc-400">Add your first note above, or clear the search filter.</div>
         </div>
         <ul id="notes-list" class="mt-2 space-y-3 max-h-[420px] overflow-y-auto pr-1"></ul>
         </section>
@@ -138,7 +167,7 @@
             </div>
             </main>
 
-            <footer class="border-t border-zinc-700 px-6 py-3 flex items-center justify-between text-[11px] text-zinc-400">
+            <footer class="border-t border-zinc-800/70 px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
                 <span>FastAPI · SQLModel · JWT Auth</span>
                 <span>Client-only UI · No external JS frameworks</span>
             </footer>
@@ -148,6 +177,28 @@
     <script>
         let accessToken = null;
         let currentUsername = null;
+
+        function setAuthMessage(text, kind = "info") {
+            const el = document.getElementById("auth-message");
+            if (!el) return;
+            el.textContent = text || "";
+
+            el.className = "min-h-4 text-xs";
+            if (!text) {
+                el.classList.add("text-zinc-300");
+                return;
+            }
+
+            if (kind === "success") {
+                el.classList.add("text-emerald-300");
+            } else if (kind === "error") {
+                el.classList.add("text-rose-300");
+            } else if (kind === "warning") {
+                el.classList.add("text-amber-300");
+            } else {
+                el.classList.add("text-zinc-300");
+            }
+        }
 
         function clearAuthInputs() {
             const userInput = document.getElementById("auth-username");
@@ -183,7 +234,6 @@
             const appSection = document.getElementById("app-section");
             const authStatus = document.getElementById("auth-status");
             const logoutBtn = document.getElementById("btn-logout");
-            const authMessage = document.getElementById("auth-message");
             const authFields = document.getElementById("auth-fields");
             const authButtons = document.getElementById("auth-buttons");
 
@@ -191,7 +241,7 @@
                 appSection.classList.remove("hidden");
                 authStatus.textContent = `Logged in as ${currentUsername}`;
                 logoutBtn.classList.remove("hidden");
-                authMessage.textContent = "";
+                setAuthMessage("");
                 if (authFields) authFields.classList.add("hidden");
                 if (authButtons) authButtons.classList.add("hidden");
             } else {
@@ -206,8 +256,7 @@
         function handleAuthError(response) {
             if (response.status === 401 || response.status === 403) {
                 setAuthState(null, null);
-                const authMessage = document.getElementById("auth-message");
-                authMessage.textContent = "Session expired or unauthorized. Please log in again.";
+                setAuthMessage("Session expired or unauthorized. Please log in again.", "warning");
                 return true;
             }
             return false;
@@ -231,11 +280,19 @@
             const notes = await response.json();
 
             const list = document.getElementById("notes-list");
+            const emptyState = document.getElementById("notes-empty");
             list.innerHTML = '';
+
+            if (!notes || notes.length === 0) {
+                if (emptyState) emptyState.classList.remove("hidden");
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add("hidden");
+            }
 
             notes.forEach((note) => {
                 const li = document.createElement("li");
-                li.className  = "group rounded-xl border border-zinc-700 bg-zinc-900/70 p-4 shadow-sm transition hover:border-indigo-500/60 hover:bg-zinc-900 cursor-pointer";
+                li.className  = "group rounded-2xl border border-zinc-800/80 bg-zinc-950/30 p-4 shadow-sm transition hover:border-indigo-500/50 hover:bg-zinc-950/45 cursor-pointer";
                 li.innerHTML = `
                 <div class="flex justify-between items-start gap-4">
                     <div class="min-w-0">
@@ -244,13 +301,13 @@
                         </div>
                         <div class="space-x-2 shrink-0">
                             <button
-                            class="text-xs font-medium text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                            class="text-xs font-medium text-indigo-300 hover:text-indigo-200 cursor-pointer"
                             data-edit-id="${note.id}"
                             >
                             Edit
                             </button>
                             <button
-                            class="text-xs font-medium text-rose-400 hover:text-rose-300 cursor-pointer"
+                            class="text-xs font-medium text-rose-300 hover:text-rose-200 cursor-pointer"
                             data-id="${note.id}"
                             >
                             Delete
@@ -348,11 +405,10 @@
         }
 
         async function loginWithCredentials(username, password, source = "login") {
-            const authMessage = document.getElementById("auth-message");
-            authMessage.textContent = "";
+            setAuthMessage("");
 
             if (!username || !password) {
-                authMessage.textContent = "Username and password are required.";
+                setAuthMessage("Username and password are required.", "error");
                 return false;
             }
 
@@ -368,7 +424,7 @@
 
             if (!response.ok) {
                 const data = await response.json().catch(() => ({}));
-                authMessage.textContent = data.detail || (source === "register" ? "Auto-login after registration failed" : "Login failed");
+                setAuthMessage(data.detail || (source === "register" ? "Auto-login after registration failed" : "Login failed"), "error");
                 return false;
             }
 
@@ -376,11 +432,11 @@
             if (data && data.access_token) {
                 setAuthState(data.access_token, username);
                 clearAuthInputs();
-                authMessage.textContent = source === "register" ? "Registered and logged in successfully." : "Logged in successfully.";
+                setAuthMessage(source === "register" ? "Registered and logged in successfully." : "Logged in successfully.", "success");
                 loadNotes();
                 return true;
             } else {
-                authMessage.textContent = "Invalid token response from server.";
+                setAuthMessage("Invalid token response from server.", "error");
                 return false;
             }
         }
@@ -389,11 +445,10 @@
         document.getElementById("btn-register").addEventListener("click", async () => {
             const username = document.getElementById("auth-username").value.trim();
             const password = document.getElementById("auth-password").value.trim();
-            const authMessage = document.getElementById("auth-message");
-            authMessage.textContent = "";
+            setAuthMessage("");
 
             if (!username || !password) {
-                authMessage.textContent = "Username and password are required.";
+                setAuthMessage("Username and password are required.", "error");
                 return;
             }
 
@@ -405,7 +460,7 @@
 
             if (!response.ok) {
                 const data = await response.json().catch(() => ({}));
-                authMessage.textContent = data.detail || "Registration failed";
+                setAuthMessage(data.detail || "Registration failed", "error");
                 return;
             }
 
@@ -424,6 +479,8 @@
             clearAuthInputs();
             const list = document.getElementById("notes-list");
             if (list) list.innerHTML = "";
+            const emptyState = document.getElementById("notes-empty");
+            if (emptyState) emptyState.classList.add("hidden");
         });
 
         // Restore auth state from localStorage on load
