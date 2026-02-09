@@ -11,12 +11,22 @@ from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
+import secrets
+import smtplib
+from email.message import EmailMessage
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-this-to-a-long-random-string")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -134,6 +144,9 @@ class UserBase(BaseModel):
 class UserInDB(UserBase):
     id: str = Field(alias="_id")
     hashed_password: str
+    is_verified: bool = False
+    verification_code: Optional[str] = None
+    verification_expires_at: Optional[datetime] = None
 
     class Config:
         populate_by_name = True
@@ -179,6 +192,7 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: str
+    is_verified: bool = False
 
 
 class NoteBase(BaseModel):
@@ -223,6 +237,10 @@ class PasswordChange(BaseModel):
     current_password: str
     new_password: str
 
+
+class EmailVerification(BaseModel):
+    code: str
+
 # # database setup ---->
 
 # DATABASE_URL = "sqlite:///./notes.db"
@@ -243,6 +261,7 @@ db = client.notesdb
 
 users_collection = db.users
 notes_collection = db.notes
+deleted_notes_collection = db.deleted_notes
 
 
 # ---------- Auth helpers ----------
@@ -314,6 +333,31 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
+def send_verification_email(to_email: str, code: str) -> None:
+    subject = "Your Secure Notes verification code"
+    body = (
+        f"Your email verification code is: {code}\n\n"
+        "This code will expire in 10 minutes."
+    )
+
+    # If SMTP is configured, send a real email. Otherwise, log to console for dev.
+    if SMTP_HOST and EMAIL_FROM and SMTP_USERNAME and SMTP_PASSWORD:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_FROM
+        msg["To"] = to_email
+        msg.set_content(body)
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_USE_TLS:
+                server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+    else:
+        # Dev fallback: print code to server logs
+        print(f"[DEV] Verification code for {to_email}: {code}")
+
+
 async def get_user_by_username(username: str) -> Optional[UserInDB]:
     user_doc = await users_collection.find_one({"username": username})
     if user_doc:
@@ -360,6 +404,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     if user is None:
         raise credentials_exception
     return user
+
+
+@app.get("/users/me", response_model=UserRead)
+async def read_current_user(current_user: UserInDB = Depends(get_current_user)):
+    user_doc = await users_collection.find_one({"_id": ObjectId(current_user.id)})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return UserRead(
+        id=str(user_doc["_id"]),
+        username=user_doc["username"],
+        is_verified=bool(user_doc.get("is_verified", False)),
+    )
 
 # Routes ---->
 
@@ -606,23 +663,61 @@ async def update_note(
         updated_at=updated_doc["updated_at"],
     )
 
-# delete a specific note by id
+# delete a specific note by id (with undo support)
 
 @app.delete("/notes/{note_id}")
 async def delete_note(
     note_id: str,
     current_user: UserInDB = Depends(get_current_user),
 ):
+    """Soft-delete a note: move it to deleted_notes so it can be undone once."""
     try:
         note_doc = await notes_collection.find_one({"_id": ObjectId(note_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=404, detail="Note not found")
 
-    if not note_doc or note_doc["user_id"] != current_user.id:
+    if not note_doc or note_doc.get("user_id") != current_user.id:
         raise HTTPException(status_code=404, detail="Note not found")
 
+    # Add deleted_at timestamp and move to deleted_notes_collection
+    note_doc["deleted_at"] = datetime.now(timezone.utc)
+    await deleted_notes_collection.insert_one(note_doc)
+
+    # Remove from main notes collection
     await notes_collection.delete_one({"_id": ObjectId(note_id)})
     return {"detail": "Note deleted"}
+
+
+@app.post("/notes/undo-delete", response_model=NoteRead)
+async def undo_delete_note(current_user: UserInDB = Depends(get_current_user)):
+    """Restore the most recently deleted note for the current user.
+
+    Each deleted note can only be restored once because it is removed
+    from deleted_notes_collection after being re-inserted into notes.
+    """
+
+    # Find the most recently deleted note for this user
+    deleted_note = await deleted_notes_collection.find_one(
+        {"user_id": current_user.id}, sort=[("deleted_at", -1)]
+    )
+
+    if not deleted_note:
+        raise HTTPException(status_code=404, detail="No deleted note to undo")
+
+    # Remove from the deleted collection so it can't be undone twice
+    await deleted_notes_collection.delete_one({"_id": deleted_note["_id"]})
+
+    # Reinsert into main notes collection (preserve original _id)
+    restored_doc = deleted_note.copy()
+    await notes_collection.insert_one(restored_doc)
+
+    return NoteRead(
+        id=str(restored_doc["_id"]),
+        title=restored_doc["title"],
+        content=restored_doc["content"],
+        created_at=restored_doc["created_at"],
+        updated_at=restored_doc["updated_at"],
+    )
 
 
 # faulty user deletion route---->
@@ -690,9 +785,10 @@ async def register_user(user_in: UserCreate):
     user_doc = {
         "username": user_in.username,
         "hashed_password": get_password_hash(user_in.password),
+        "is_verified": False,
     }
     result = await users_collection.insert_one(user_doc)
-    return UserRead(id=str(result.inserted_id), username=user_in.username)
+    return UserRead(id=str(result.inserted_id), username=user_in.username, is_verified=False)
 
 
 @app.post("/token", response_model=Token)
@@ -741,5 +837,72 @@ async def change_password(
     )
 
     return {"detail": "Password updated"}
+
+
+@app.post("/users/me/send-verification-code")
+async def send_verification_code_route(
+    current_user: UserInDB = Depends(get_current_user),
+):
+    user_doc = await users_collection.find_one({"_id": ObjectId(current_user.id)})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_doc.get("is_verified"):
+        raise HTTPException(status_code=400, detail="Email already verified")
+
+    code = f"{secrets.randbelow(10**6):06d}"
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    await users_collection.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": {"verification_code": code, "verification_expires_at": expires_at}},
+    )
+
+    try:
+        send_verification_email(user_doc["username"], code)
+    except Exception as e:
+        print(f"Error sending verification email: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
+
+    return {"detail": "Verification code sent"}
+
+
+@app.post("/users/me/verify-email")
+async def verify_email(
+    payload: EmailVerification,
+    current_user: UserInDB = Depends(get_current_user),
+):
+    user_doc = await users_collection.find_one({"_id": ObjectId(current_user.id)})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_doc.get("is_verified"):
+        return {"detail": "Email already verified"}
+
+    stored_code = user_doc.get("verification_code")
+    expires_at = user_doc.get("verification_expires_at")
+    now = datetime.now(timezone.utc)
+
+    # Normalize expires_at to be timezone-aware (UTC) to avoid naive/aware comparison issues
+    if expires_at is not None and getattr(expires_at, "tzinfo", None) is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if (
+        not stored_code
+        or not expires_at
+        or expires_at < now
+        or payload.code != stored_code
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+
+    await users_collection.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {
+            "$set": {"is_verified": True},
+            "$unset": {"verification_code": "", "verification_expires_at": ""},
+        },
+    )
+
+    return {"detail": "Email verified"}
 
 
