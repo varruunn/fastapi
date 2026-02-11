@@ -114,12 +114,58 @@
                                         Login
                                     </button>
                                 </div>
-                                <div id="auth-status" class="flex-1 text-right text-xs text-zinc-400"></div>
+                                <div class="flex flex-col items-end gap-1 flex-1">
+                                    <button id="btn-forgot-password"
+                                        class="text-[11px] text-indigo-300 hover:text-indigo-200 cursor-pointer underline-offset-2 hover:underline"
+                                        type="button">
+                                        Forgot password?
+                                    </button>
+                                    <div id="auth-status" class="text-right text-xs text-zinc-400"></div>
+                                </div>
                                 <button id="btn-logout"
                                     class="hidden text-xs font-medium text-rose-300 hover:text-rose-200 cursor-pointer"
                                     type="button">
                                     Logout
                                 </button>
+                            </div>
+                            <div id="forgot-password-section" class="mt-3 hidden border-t border-zinc-800/70 pt-3 space-y-2 text-xs">
+                                <div class="text-zinc-300">
+                                    Enter your email to receive a reset code, then set a new password.
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex flex-col gap-2">
+                                        <input id="forgot-email" type="email" placeholder="Email address"
+                                            class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                        <button id="btn-request-reset"
+                                            class="inline-flex items-center justify-center rounded-lg border border-indigo-500/50 bg-indigo-500/20 px-3 py-2 text-[11px] font-medium text-indigo-100 hover:bg-indigo-500/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                            type="button">
+                                            Send reset code
+                                        </button>
+                                    </div>
+                                    <div class="grid gap-2 md:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)]">
+                                        <input id="reset-code" type="text" placeholder="Reset code"
+                                            class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40" />
+                                        <input id="reset-new-password" type="password" placeholder="New password (same rules as registration)"
+                                            class="w-full rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 hidden" />
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <button id="btn-verify-reset-code"
+                                            class="inline-flex items-center justify-center rounded-lg bg-sky-500 px-4 py-2 text-[11px] font-medium text-white hover:bg-sky-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+                                            type="button">
+                                            Verify code
+                                        </button>
+                                        <button id="btn-submit-reset"
+                                            class="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-[11px] font-medium text-white hover:bg-emerald-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 hidden"
+                                            type="button">
+                                            Reset password
+                                        </button>
+                                        <button id="btn-cancel-forgot"
+                                            class="text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                                            type="button">
+                                            Back to login
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <!-- Email verification status & controls (visible when logged in) -->
                             <div id="email-verification" class="mt-3 hidden border-t border-zinc-800/70 pt-3 space-y-2 text-xs">
@@ -294,6 +340,174 @@
                 el.classList.add("text-zinc-300");
             }
         }
+
+        // Forgot password / reset password UI handlers
+        (function setupForgotPassword() {
+            const forgotToggle = document.getElementById("btn-forgot-password");
+            const forgotSection = document.getElementById("forgot-password-section");
+            const cancelForgot = document.getElementById("btn-cancel-forgot");
+            const requestResetBtn = document.getElementById("btn-request-reset");
+            const verifyCodeBtn = document.getElementById("btn-verify-reset-code");
+            const submitResetBtn = document.getElementById("btn-submit-reset");
+            const forgotEmailInput = document.getElementById("forgot-email");
+            const resetCodeInput = document.getElementById("reset-code");
+            const resetNewPasswordInput = document.getElementById("reset-new-password");
+            const authFields = document.getElementById("auth-fields");
+            const authButtons = document.getElementById("auth-buttons");
+
+            function clearForgotFields() {
+                if (forgotEmailInput) forgotEmailInput.value = "";
+                if (resetCodeInput) resetCodeInput.value = "";
+                if (resetNewPasswordInput) resetNewPasswordInput.value = "";
+            }
+
+            if (!forgotToggle || !forgotSection) return;
+
+            function showForgot() {
+                if (authFields) authFields.classList.add("hidden");
+                if (authButtons) authButtons.classList.add("hidden");
+                if (forgotToggle) forgotToggle.classList.add("hidden");
+                forgotSection.classList.remove("hidden");
+
+                const loginEmailInput = document.getElementById("auth-username");
+                const loginEmail = loginEmailInput ? loginEmailInput.value.trim() : "";
+                if (loginEmail && !forgotEmailInput.value) {
+                    forgotEmailInput.value = loginEmail;
+                }
+                setAuthMessage("");
+            }
+
+            function hideForgot() {
+                forgotSection.classList.add("hidden");
+                if (authFields) authFields.classList.remove("hidden");
+                if (authButtons) authButtons.classList.remove("hidden");
+                if (forgotToggle) forgotToggle.classList.remove("hidden");
+                clearForgotFields();
+                if (resetNewPasswordInput) resetNewPasswordInput.classList.add("hidden");
+                if (submitResetBtn) submitResetBtn.classList.add("hidden");
+                if (verifyCodeBtn) verifyCodeBtn.classList.remove("hidden");
+                if (resetCodeInput) resetCodeInput.disabled = false;
+                if (forgotEmailInput) forgotEmailInput.disabled = false;
+                setAuthMessage("");
+            }
+
+            forgotToggle.addEventListener("click", (e) => {
+                e.preventDefault();
+                showForgot();
+            });
+
+            if (cancelForgot) {
+                cancelForgot.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    hideForgot();
+                });
+            }
+
+            if (requestResetBtn) {
+                requestResetBtn.addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    const email = (forgotEmailInput.value || "").trim();
+                    if (!email) {
+                        setAuthMessage("Please enter your email address.", "error");
+                        return;
+                    }
+                    if (!isValidEmail(email)) {
+                        setAuthMessage("Please enter a valid email address.", "error");
+                        return;
+                    }
+
+                    setAuthMessage("Requesting reset code...", "info");
+                    const response = await fetch("http://127.0.0.1:8000/forgot-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email }),
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+                    setAuthMessage(data.detail || "If an account with that email exists, a reset code has been sent.", "success");
+                    if (forgotEmailInput) forgotEmailInput.disabled = true;
+                });
+            }
+
+            if (verifyCodeBtn) {
+                verifyCodeBtn.addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    const email = (forgotEmailInput.value || "").trim();
+                    const code = (resetCodeInput.value || "").trim();
+
+                    if (!email || !code) {
+                        setAuthMessage("Please enter both email and reset code.", "error");
+                        return;
+                    }
+
+                    if (!isValidEmail(email)) {
+                        setAuthMessage("Please enter a valid email address.", "error");
+                        return;
+                    }
+
+                    setAuthMessage("Verifying reset code...", "info");
+                    const response = await fetch("http://127.0.0.1:8000/verify-reset-code", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, code }),
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json().catch(() => ({}));
+                        setAuthMessage(data.detail || "Invalid or expired reset code.", "error");
+                        return;
+                    }
+
+                    setAuthMessage("Code verified. You can now set a new password.", "success");
+                    if (resetCodeInput) resetCodeInput.disabled = true;
+                    if (resetNewPasswordInput) resetNewPasswordInput.classList.remove("hidden");
+                    if (submitResetBtn) submitResetBtn.classList.remove("hidden");
+                    if (verifyCodeBtn) verifyCodeBtn.classList.add("hidden");
+                });
+            }
+
+            if (submitResetBtn) {
+                submitResetBtn.addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    const email = (forgotEmailInput.value || "").trim();
+                    const code = (resetCodeInput.value || "").trim();
+                    const newPassword = (resetNewPasswordInput.value || "").trim();
+
+                    if (!email || !code || !newPassword) {
+                        setAuthMessage("Please fill in email, reset code and new password.", "error");
+                        return;
+                    }
+
+                    if (!isValidEmail(email)) {
+                        setAuthMessage("Please enter a valid email address.", "error");
+                        return;
+                    }
+
+                    const pwIssue = checkPasswordStrength(newPassword, email);
+                    if (pwIssue) {
+                        setAuthMessage(pwIssue, "error");
+                        return;
+                    }
+
+                    const response = await fetch("http://127.0.0.1:8000/reset-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, code, new_password: newPassword }),
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json().catch(() => ({}));
+                        setAuthMessage(data.detail || "Failed to reset password.", "error");
+                        return;
+                    }
+
+                    setAuthMessage("Password has been reset. You can now log in with your new password.", "success");
+                    hideForgot();
+                    const loginEmailInput = document.getElementById("auth-username");
+                    if (loginEmailInput) loginEmailInput.value = email;
+                });
+            }
+        })();
 
         function clearAuthInputs() {
             const userInput = document.getElementById("auth-username");

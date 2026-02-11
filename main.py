@@ -241,6 +241,21 @@ class PasswordChange(BaseModel):
 class EmailVerification(BaseModel):
     code: str
 
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
+
+
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
 # # database setup ---->
 
 # DATABASE_URL = "sqlite:///./notes.db"
@@ -333,6 +348,65 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
+def validate_password_strength(password: str, username: str) -> None:
+    """Validate password using the same rules as UserCreate.password."""
+    if len(password) < 12:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 12 characters long",
+        )
+
+    if not any(c.islower() for c in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must include a lowercase letter",
+        )
+    if not any(c.isupper() for c in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must include an uppercase letter",
+        )
+    if not any(c.isdigit() for c in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must include a number",
+        )
+    if not any(c in "!@#$%^&*()-_=+[]{};:,<.>/?\\|`~" for c in password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must include a special character",
+        )
+
+    uname = str(username).lower()
+    local_part = uname.split("@")[0] if "@" in uname else uname
+    lower_pw = password.lower()
+
+    if uname and uname in lower_pw:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must not contain your email",
+        )
+    if local_part and local_part in lower_pw:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must not contain your name/username",
+        )
+
+    common_words = [
+        "password",
+        "qwerty",
+        "letmein",
+        "123456",
+        "123456789",
+        "admin",
+    ]
+    if any(w in lower_pw for w in common_words):
+        raise HTTPException(
+            status_code=400,
+            detail="Password is too common",
+        )
+
+
 def send_verification_email(to_email: str, code: str) -> None:
     subject = "Your Secure Notes verification code"
     body = (
@@ -404,6 +478,114 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     if user is None:
         raise credentials_exception
     return user
+
+
+@app.post("/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest):
+    """Initiate password reset. Always return generic success message."""
+    user_doc = await users_collection.find_one({"username": payload.email})
+
+    if user_doc:
+        code = f"{secrets.randbelow(10**6):06d}"
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+        await users_collection.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "reset_code": code,
+                    "reset_expires_at": expires_at,
+                }
+            },
+        )
+
+        try:
+            subject = "Your Secure Notes password reset code"
+            body = (
+                f"Your password reset code is: {code}\n\n"
+                "This code will expire in 15 minutes."
+            )
+
+            if SMTP_HOST and EMAIL_FROM and SMTP_USERNAME and SMTP_PASSWORD:
+                msg = EmailMessage()
+                msg["Subject"] = subject
+                msg["From"] = EMAIL_FROM
+                msg["To"] = payload.email
+                msg.set_content(body)
+
+                with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                    if SMTP_USE_TLS:
+                        server.starttls()
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                    server.send_message(msg)
+            else:
+                print(f"[DEV] Password reset code for {payload.email}: {code}")
+        except Exception as e:
+            print(f"Error sending password reset email: {e}")
+
+    return {"detail": "If an account with that email exists, a reset code has been sent."}
+
+
+@app.post("/verify-reset-code")
+async def verify_reset_code(payload: VerifyResetCodeRequest):
+    """Verify reset code without changing the password yet."""
+    user_doc = await users_collection.find_one({"username": payload.email})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    stored_code = user_doc.get("reset_code")
+    expires_at = user_doc.get("reset_expires_at")
+    now = datetime.now(timezone.utc)
+
+    if expires_at is not None and getattr(expires_at, "tzinfo", None) is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if (
+        not stored_code
+        or not expires_at
+        or expires_at < now
+        or payload.code != stored_code
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+
+    # Code is valid; do not clear it yet so /reset-password can still use it once
+    return {"detail": "Reset code verified"}
+
+
+@app.post("/reset-password")
+async def reset_password(payload: ResetPasswordRequest):
+    user_doc = await users_collection.find_one({"username": payload.email})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    stored_code = user_doc.get("reset_code")
+    expires_at = user_doc.get("reset_expires_at")
+    now = datetime.now(timezone.utc)
+
+    if expires_at is not None and getattr(expires_at, "tzinfo", None) is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if (
+        not stored_code
+        or not expires_at
+        or expires_at < now
+        or payload.code != stored_code
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+
+    validate_password_strength(payload.new_password, payload.email)
+
+    new_hashed = get_password_hash(payload.new_password)
+
+    await users_collection.update_one(
+        {"_id": user_doc["_id"]},
+        {
+            "$set": {"hashed_password": new_hashed},
+            "$unset": {"reset_code": "", "reset_expires_at": ""},
+        },
+    )
+
+    return {"detail": "Password has been reset"}
 
 
 @app.get("/users/me", response_model=UserRead)
